@@ -23,6 +23,14 @@
           }
         },
         {
+          "client_id": "212776565465-4574bsr50akuu2blpnpokdm5mko1kr4j.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.milan.brtshelper",
+            "certificate_hash": "18c5c334c3f28148d8de03bcbd1400c18b2846ec"
+          }
+        },
+        {
           "client_id": "212776565465-h3vqb0752bb0t6kbtm9t4fp3nid3k896.apps.googleusercontent.com",
           "client_type": 3
         }

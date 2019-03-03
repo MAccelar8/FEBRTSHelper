@@ -14,6 +14,8 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.firebase.FirebaseApp;
+
 public class MainActivity extends AppCompatActivity {
     android.widget.SearchView searchviewmain;
     android.widget.SearchView searchviewdestmain;
@@ -21,6 +23,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        FirebaseApp.initializeApp(this);
 //
 //        searchviewdestmain = (android.widget.SearchView) findViewById(R.id.searchbar_main_dest);
 //
@@ -95,9 +98,10 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-    public void onEntersourceMainClicked(View view){
+    public void onmainButtonclicked (View view){
 
-
+        Intent i = new Intent(this, LoginActivity.class);
+        startActivity(i);
     }
 
     public void onDestinationMainClicked(View view){
