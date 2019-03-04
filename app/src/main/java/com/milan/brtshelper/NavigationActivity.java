@@ -20,16 +20,22 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 
+import static android.widget.Toast.LENGTH_LONG;
 import static com.milan.brtshelper.R.string.drawer_close;
 
 public class NavigationActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
     private android.support.v7.widget.Toolbar mToolbar;
     private DrawerLayout mDrawer;
-
+    private FirebaseFirestore db;
     private String uid;
     
     android.widget.SearchView searchviewmain;
@@ -41,6 +47,7 @@ public class NavigationActivity extends AppCompatActivity implements NavigationV
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_navigation);
         FirebaseApp.initializeApp(this);
+        db = FirebaseFirestore.getInstance();
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user != null) {
@@ -50,7 +57,7 @@ public class NavigationActivity extends AppCompatActivity implements NavigationV
             Intent i =new Intent(NavigationActivity.this,LoginActivity.class);
             startActivity(i);
         }
-        Toast.makeText(NavigationActivity.this,uid,Toast.LENGTH_LONG).show();
+        Toast.makeText(NavigationActivity.this,uid, LENGTH_LONG).show();
         setupToolbar();
         setupNavDrawermenu(uid);
 
@@ -184,8 +191,34 @@ public class NavigationActivity extends AppCompatActivity implements NavigationV
 
         switch (menuItem.getItemId()){
             case   R.id.navprofile:
-                i = new Intent(NavigationActivity.this, ProfilePageActivity.class);
-                startActivity(i);
+
+
+                DocumentReference docRef = db.collection("users").document(uid);
+                docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                        if (task.isSuccessful()) {
+                            DocumentSnapshot document = task.getResult();
+                            if (document.exists()) {
+                                //Log.d(TAG, "DocumentSnapshot data: " + document.getString("userfname"));
+
+                                if (document.getString("userfname").contains("null")) {
+
+                                    Intent newi = new Intent(NavigationActivity.this, ProfilePageActivity.class);
+                                    startActivity(newi);
+                                } else {
+                                    Intent newi = new Intent(NavigationActivity.this, ProfileDisplayActivity.class);
+                                    startActivity(newi);
+                                }
+                            } else {
+                                Log.d("switchcaseexp", "get failed with ", task.getException());
+                            }
+                        }
+                    }
+                });
+
+
+
                 break;
             case R.id.navmap:
                 i = new Intent(NavigationActivity.this, NavigationMapActivity.class);
@@ -205,6 +238,12 @@ public class NavigationActivity extends AppCompatActivity implements NavigationV
                 i = new Intent(NavigationActivity.this, ContactUsActivity.class);
                 startActivity(i);
                 break;
+
+            case R.id.userlogout:
+                FirebaseAuth.getInstance().signOut();
+                i = new Intent(NavigationActivity.this , LoginActivity.class);
+                i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(i);
         }
 
 

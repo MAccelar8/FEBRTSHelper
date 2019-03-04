@@ -23,6 +23,9 @@
         android:icon="@drawable/baseline_mood_black_18dp"
         android:id="@+id/navcontactus"
         android:checkable="true"/>
+    <item android:title="Logout"
+        android:id="@+id/userlogout"
+        />
 
 
 </menu>

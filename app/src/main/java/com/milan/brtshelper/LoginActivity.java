@@ -8,9 +8,12 @@ import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.FirebaseException;
 import com.google.firebase.auth.AuthResult;
@@ -18,22 +21,37 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.PhoneAuthCredential;
 import com.google.firebase.auth.PhoneAuthProvider;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class LoginActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private String codeSent;
+    private FirebaseFirestore db;
+    private String phno;
+    private boolean flag;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
+        // Access a Cloud Firestore instance from your Activity
+         db = FirebaseFirestore.getInstance();
+         flag=true;
+
+
+
         final EditText loginedit = (EditText)findViewById(R.id.loginphone);
         final Button loginbutton = findViewById(R.id.loginbutton);
         final Button verifybutton = findViewById(R.id.verifybutton);
         loginbutton.setEnabled(true);
+
 
         mAuth = FirebaseAuth.getInstance();
 
@@ -41,7 +59,7 @@ public class LoginActivity extends AppCompatActivity {
         loginbutton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String phno = loginedit.getText().toString().trim();
+                phno = loginedit.getText().toString().trim();
 
                 if (phno.isEmpty()){
                     loginedit.setError("Phone Number is required!!");
@@ -54,6 +72,22 @@ public class LoginActivity extends AppCompatActivity {
                 }
                 else {
                         phno = "+91" + phno;
+
+                    final DocumentReference docRef = db.collection("users").document(phno);
+                    docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                        @Override
+                        public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                            if (task.isSuccessful()) {
+                                DocumentSnapshot document = task.getResult();
+                                if (document.exists()) {
+                                    flag=false;
+                                } else {
+                                    flag=true;
+                                }
+                            }
+                        }
+                    });
+
                         Log.d("PHno00",phno);
                         sendVerificationCode(phno);
                 }
@@ -69,8 +103,9 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
 
-
     }
+
+
 
     private void verifycode() {
         EditText editTextVerify = findViewById(R.id.verifyphonetext);
@@ -78,7 +113,10 @@ public class LoginActivity extends AppCompatActivity {
         PhoneAuthCredential credential = PhoneAuthProvider.getCredential(codeSent,verifycode);
         Log.d("VerifyCode22", credential.toString());
         signInWithPhone(credential);
+
     }
+
+
 
     private void signInWithPhone(PhoneAuthCredential credential) {
 
@@ -87,7 +125,27 @@ public class LoginActivity extends AppCompatActivity {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
+                            if(flag){
 
+                                Map<String, Object> temp = new HashMap<>();
+                                temp.put("useremail", "");
+                                temp.put("userfname", "null");
+                                temp.put("userlname", "");
+                                db.collection("users").document(phno).set(temp)
+                                        .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                            @Override
+                                            public void onSuccess(Void aVoid) {
+                                                Toast.makeText(LoginActivity.this, "Added to DB", Toast.LENGTH_LONG).show();
+                                            }
+                                        })
+                                        .addOnFailureListener(new OnFailureListener() {
+                                            @Override
+                                            public void onFailure(@NonNull Exception e) {
+                                                Log.w("onDBaddFail","Error Occured",e);
+                                            }
+                                        });
+
+                            }
                             Toast.makeText(LoginActivity.this,"Success", Toast.LENGTH_LONG).show();
                             Intent i = new Intent(LoginActivity.this , NavigationActivity.class);
 //                            Log.d("Login_Success", "signInWithCredential:success");
