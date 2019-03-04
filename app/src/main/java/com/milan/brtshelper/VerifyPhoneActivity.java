@@ -31,12 +31,58 @@ public class VerifyPhoneActivity extends AppCompatActivity {
 
     private FirebaseAuth mAuth;
     private ProgressBar pbar;
-    private EditText edittext;
+    private EditText codeEntered;
     private PhoneAuthProvider.ForceResendingToken mResendToken;
+    private  String codeRecieved;
+    private  Button verifyButton;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_verify_phone);
+        verifyButton = findViewById(R.id.verifybutton);
+        codeEntered = findViewById(R.id.verifyphonetext);
+        final String codeTyped  = codeEntered.getText().toString().trim();
 
+        codeRecieved = getIntent().getStringExtra("codeSent");
+        Log.d("xxxxxxx",codeRecieved);
+        verifyButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                verifycode(codeTyped,codeRecieved);
             }
+        });
+    }
+    private void verifycode(String codeTyped , String codeRecieved) {
+        try {
+            PhoneAuthCredential credential = PhoneAuthProvider.getCredential(codeRecieved, codeTyped);
+            Log.d("VerifyCode22", credential.toString());
+            signInWithPhone(credential);
+        }catch (Exception e){
+            Toast.makeText(VerifyPhoneActivity.this,e.toString(),Toast.LENGTH_LONG);
         }
+    }
+    private void signInWithPhone(PhoneAuthCredential credential) {
+        mAuth.signInWithCredential(credential)
+                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if (task.isSuccessful()) {
+
+                                Toast.makeText(VerifyPhoneActivity.this,"Success", Toast.LENGTH_LONG);
+//                            Intent i = new Intent(VerifyPhoneActivity.this , SignupActivity.class);
+//                            Log.d("Login_Success", "signInWithCredential:success");
+//
+//                            startActivity(i);
+
+                        } else {
+                            // Sign in failed, display a message and update the UI
+                            Log.w("Verify_error", "signInWithCredential:failure", task.getException());
+                            if (task.getException() instanceof FirebaseAuthInvalidCredentialsException) {
+                                Toast.makeText(VerifyPhoneActivity.this,"Entered Code was Invalid....", Toast.LENGTH_LONG);
+                            }
+                        }
+                    }
+                });
+    }
+
+}
